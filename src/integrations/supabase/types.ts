@@ -14,7 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      expenses: {
+        Row: {
+          c_custo: string | null
+          conta_contabil: string | null
+          created_at: string
+          date: string
+          descricao: string | null
+          fornecedor: string | null
+          id: string
+          pacote: string | null
+          subpacote: string | null
+          valor: number
+        }
+        Insert: {
+          c_custo?: string | null
+          conta_contabil?: string | null
+          created_at?: string
+          date: string
+          descricao?: string | null
+          fornecedor?: string | null
+          id?: string
+          pacote?: string | null
+          subpacote?: string | null
+          valor?: number
+        }
+        Update: {
+          c_custo?: string | null
+          conta_contabil?: string | null
+          created_at?: string
+          date?: string
+          descricao?: string | null
+          fornecedor?: string | null
+          id?: string
+          pacote?: string | null
+          subpacote?: string | null
+          valor?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
