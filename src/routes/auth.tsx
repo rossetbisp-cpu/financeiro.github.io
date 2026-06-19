@@ -8,7 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { TrendingDown, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
+import logoAsset from "@/assets/rosset-logo.png.asset.json";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -73,20 +74,20 @@ function AuthPage() {
     <div className="min-h-screen flex">
       <div className="hidden lg:flex flex-1 relative overflow-hidden" style={{ background: "var(--gradient-navy)" }}>
         <div className="relative z-10 flex flex-col justify-between p-12 text-primary-foreground w-full">
-          <Link to="/auth" className="flex items-center gap-2 font-semibold tracking-tight">
-            <TrendingDown className="h-5 w-5" />
-            <span>Ecommerce Costs</span>
+          <Link to="/auth" className="flex items-center gap-3">
+            <img src={logoAsset.url} alt="Rosset" className="h-9 bg-black rounded p-1.5" />
+            <span className="text-xs uppercase tracking-[0.3em] opacity-80">Ecommerce Finance</span>
           </Link>
           <div className="space-y-4 max-w-md">
             <h1 className="text-4xl font-semibold tracking-tight leading-tight">
-              DRE em tempo real do seu departamento de e-commerce.
+              Acompanhamento de despesas do e-commerce, com a clareza Rosset.
             </h1>
             <p className="text-sm opacity-80">
-              Acompanhe despesas por pacote, fornecedor e centro de custo. Filtros, logos
-              dos parceiros e visão consolidada em uma única tela.
+              Lançamento de notas, rateio entre marcas, fornecedores e DRE consolidada —
+              tudo em uma única plataforma.
             </p>
           </div>
-          <p className="text-xs opacity-60">© 2026 Ecommerce Costs</p>
+          <p className="text-xs opacity-60">© 2026 Rosset Têxtil</p>
         </div>
       </div>
       <div className="flex-1 flex items-center justify-center p-6">
