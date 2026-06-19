@@ -34,3 +34,22 @@ export function initials(s: string) {
     .join("")
     .toUpperCase();
 }
+
+export const BRANDS = [
+  "VALISERE",
+  "ÁGUA DOCE",
+  "CIA.MARÍTIMA",
+  "TRIUMPH",
+  "BODY FOR SURE",
+] as const;
+
+export type Brand = (typeof BRANDS)[number];
+
+export const RATEIO_PRESETS: { label: string; brands: Brand[] }[] = [
+  { label: "Valisere + Água Doce", brands: ["VALISERE", "ÁGUA DOCE"] },
+  { label: "SP (Valisere + BFS + Cia.Marítima)", brands: ["VALISERE", "BODY FOR SURE", "CIA.MARÍTIMA"] },
+  { label: "RJ (Triumph)", brands: ["TRIUMPH"] },
+  { label: "Designer Vinícius (Valisere + BFS + Cia)", brands: ["VALISERE", "BODY FOR SURE", "CIA.MARÍTIMA"] },
+  { label: "Neomode (Cia + Valisere + BFS)", brands: ["CIA.MARÍTIMA", "VALISERE", "BODY FOR SURE"] },
+  { label: "Todas as marcas", brands: [...BRANDS] },
+];
