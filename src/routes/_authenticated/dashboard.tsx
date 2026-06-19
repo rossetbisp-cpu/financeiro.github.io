@@ -3,12 +3,11 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { getExpenses } from "@/lib/expenses.functions";
-import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import {
   Select,
   SelectContent,
@@ -18,14 +17,15 @@ import {
 } from "@/components/ui/select";
 import { PartnerLogo } from "@/components/PartnerLogo";
 import { brl, compactBrl } from "@/lib/format";
+import { AppShell } from "@/components/AppShell";
 import {
-  TrendingDown,
-  LogOut,
   ReceiptText,
   Building2,
   Layers,
   CalendarDays,
   Search,
+  TrendingUp,
+  Wallet,
 } from "lucide-react";
 import {
   BarChart,
@@ -35,6 +35,7 @@ import {
   ResponsiveContainer,
   Tooltip,
   CartesianGrid,
+  Legend,
 } from "recharts";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
@@ -60,7 +61,6 @@ type Expense = {
 };
 
 function Dashboard() {
-  const navigate = useNavigate();
   const fetchExpenses = useServerFn(getExpenses);
   const { data, isLoading } = useQuery({
     queryKey: ["expenses"],
@@ -71,6 +71,10 @@ function Dashboard() {
   const [fornecedor, setFornecedor] = useState<string>("all");
   const [search, setSearch] = useState("");
   const [month, setMonth] = useState<string>("all");
+
+  // chart controls
+  const [chartDim, setChartDim] = useState<"pacote" | "fornecedor">("pacote");
+  const [chartSelected, setChartSelected] = useState<string[]>([]);
 
   const all = data ?? [];
 
@@ -143,32 +147,41 @@ function Dashboard() {
       .map(([m, total]) => ({ m, total }));
   }, [filtered]);
 
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    navigate({ to: "/auth", replace: true });
-  };
+  // Series chart — by dimension
+  const dimOptions = useMemo(() => {
+    const key = chartDim === "pacote" ? "pacote" : "fornecedor";
+    return Array.from(
+      new Set(filtered.map((r) => (r[key as keyof Expense] as string) ?? "—"))
+    )
+      .filter(Boolean)
+      .sort();
+  }, [filtered, chartDim]);
+
+  const activeSeries = chartSelected.length
+    ? chartSelected.filter((s) => dimOptions.includes(s))
+    : dimOptions.slice(0, 5);
+
+  const seriesByMonth = useMemo(() => {
+    const key = chartDim === "pacote" ? "pacote" : "fornecedor";
+    const months = Array.from(new Set(filtered.map((r) => r.date.slice(0, 7)))).sort();
+    return months.map((m) => {
+      const row: Record<string, number | string> = { m };
+      for (const s of activeSeries) row[s] = 0;
+      for (const r of filtered) {
+        if (r.date.slice(0, 7) !== m) continue;
+        const v = (r[key as keyof Expense] as string) ?? "—";
+        if (!activeSeries.includes(v)) continue;
+        row[v] = (row[v] as number) + Number(r.valor);
+      }
+      return row;
+    });
+  }, [filtered, chartDim, activeSeries]);
+
+  const chartColors = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--chart-4)", "var(--chart-5)", "var(--accent)"];
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b bg-card sticky top-0 z-30">
-        <div className="max-w-[1400px] mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="h-9 w-9 rounded-md grid place-items-center text-primary-foreground" style={{ background: "var(--gradient-navy)" }}>
-              <TrendingDown className="h-4 w-4" />
-            </div>
-            <div>
-              <h1 className="font-semibold tracking-tight">Ecommerce Costs</h1>
-              <p className="text-xs text-muted-foreground">DRE departamental · 2026</p>
-            </div>
-          </div>
-          <Button variant="ghost" size="sm" onClick={handleSignOut}>
-            <LogOut className="h-4 w-4 mr-2" />
-            Sair
-          </Button>
-        </div>
-      </header>
-
-      <main className="max-w-[1400px] mx-auto p-6 space-y-6">
+    <AppShell title="Dashboard">
+      <div className="max-w-[1500px] mx-auto p-6 space-y-6">
         {/* Filters */}
         <Card className="p-4">
           <div className="grid gap-3 md:grid-cols-4">
@@ -217,9 +230,113 @@ function Dashboard() {
           <KpiCard label="Pacotes" value={String(byPacote.length)} sub="categorias de despesa" />
         </div>
 
-        {/* Chart */}
+        {/* Gastos por Pacote — cards */}
+        <section className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="text-base font-semibold tracking-tight flex items-center gap-2">
+              <Layers className="h-4 w-4 text-accent" /> Gastos por pacote
+            </h2>
+            <Badge variant="secondary">{byPacote.length} pacotes</Badge>
+          </div>
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {byPacote.map((p) => {
+              const pct = total > 0 ? (p.total / total) * 100 : 0;
+              return (
+                <Card key={p.name} className="p-4 hover:shadow-[var(--shadow-elegant)] transition-shadow cursor-pointer" onClick={() => setPacote(pacote === p.name ? "all" : p.name)}>
+                  <div className="flex items-start justify-between mb-3">
+                    <div>
+                      <div className="text-xs uppercase tracking-wide text-muted-foreground">Pacote</div>
+                      <div className="font-semibold tracking-tight">{p.name}</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-semibold tabular-nums">{brl(p.total)}</div>
+                      <div className="text-xs text-muted-foreground">{pct.toFixed(1)}% do total</div>
+                    </div>
+                  </div>
+                  <div className="h-1.5 bg-muted rounded-full overflow-hidden mb-3">
+                    <div className="h-full" style={{ width: `${pct}%`, background: "var(--gradient-navy)" }} />
+                  </div>
+                  <div className="space-y-1">
+                    {p.subs.slice(0, 4).map((s) => (
+                      <div key={s.name} className="flex justify-between text-xs">
+                        <span className="text-muted-foreground truncate">{s.name}</span>
+                        <span className="tabular-nums">{brl(s.total)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* Interactive chart */}
+        <Card className="p-5">
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+            <div>
+              <h3 className="font-semibold tracking-tight flex items-center gap-2">
+                <TrendingUp className="h-4 w-4 text-accent" /> Evolução mensal
+              </h3>
+              <p className="text-xs text-muted-foreground">Selecione o tipo de dado e as séries.</p>
+            </div>
+            <div className="flex items-center gap-3 flex-wrap">
+              <ToggleGroup type="single" value={chartDim} onValueChange={(v) => { if (v) { setChartDim(v as "pacote" | "fornecedor"); setChartSelected([]); } }}>
+                <ToggleGroupItem value="pacote" size="sm">Por pacote</ToggleGroupItem>
+                <ToggleGroupItem value="fornecedor" size="sm">Por fornecedor</ToggleGroupItem>
+              </ToggleGroup>
+              <Select
+                value="__placeholder__"
+                onValueChange={(v) => {
+                  if (v === "__clear__") { setChartSelected([]); return; }
+                  setChartSelected((prev) => prev.includes(v) ? prev.filter((x) => x !== v) : [...prev, v]);
+                }}
+              >
+                <SelectTrigger className="w-[260px]">
+                  <SelectValue placeholder={`Adicionar ${chartDim === "pacote" ? "pacotes" : "fornecedores"}`} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__clear__">Limpar seleção</SelectItem>
+                  {dimOptions.map((o) => (
+                    <SelectItem key={o} value={o}>
+                      {chartSelected.includes(o) ? "✓ " : ""}{o}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          {activeSeries.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 mb-3">
+              {activeSeries.map((s, i) => (
+                <Badge key={s} variant="outline" className="font-normal gap-1.5">
+                  <span className="h-2 w-2 rounded-full" style={{ background: chartColors[i % chartColors.length] }} />
+                  {s}
+                </Badge>
+              ))}
+            </div>
+          )}
+          <div className="h-72">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={seriesByMonth}>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                <XAxis dataKey="m" tick={{ fontSize: 12 }} stroke="var(--muted-foreground)" />
+                <YAxis tickFormatter={(v) => compactBrl(v)} tick={{ fontSize: 12 }} stroke="var(--muted-foreground)" />
+                <Tooltip
+                  formatter={(v: number) => brl(v)}
+                  contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: 8 }}
+                />
+                <Legend wrapperStyle={{ fontSize: 11 }} />
+                {activeSeries.map((s, i) => (
+                  <Bar key={s} dataKey={s} stackId="a" fill={chartColors[i % chartColors.length]} radius={[4, 4, 0, 0]} />
+                ))}
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </Card>
+
+        {/* Total mensal chart */}
         <Card className="p-4">
-          <h3 className="font-semibold mb-4">Despesas por mês</h3>
+          <h3 className="font-semibold mb-4 flex items-center gap-2"><Wallet className="h-4 w-4 text-accent" /> Total geral por mês</h3>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={byMonth}>
@@ -347,8 +464,8 @@ function Dashboard() {
         {isLoading && (
           <div className="text-center text-muted-foreground py-12">Carregando…</div>
         )}
-      </main>
-    </div>
+      </div>
+    </AppShell>
   );
 }
 
