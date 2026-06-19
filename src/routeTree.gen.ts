@@ -12,6 +12,9 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedLancarRouteImport } from './routes/_authenticated/lancar'
+import { Route as AuthenticatedInstrucoesRouteImport } from './routes/_authenticated/instrucoes'
+import { Route as AuthenticatedFornecedoresRouteImport } from './routes/_authenticated/fornecedores'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 
 const AuthRoute = AuthRouteImport.update({
@@ -28,6 +31,22 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedLancarRoute = AuthenticatedLancarRouteImport.update({
+  id: '/lancar',
+  path: '/lancar',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedInstrucoesRoute = AuthenticatedInstrucoesRouteImport.update({
+  id: '/instrucoes',
+  path: '/instrucoes',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedFornecedoresRoute =
+  AuthenticatedFornecedoresRouteImport.update({
+    id: '/fornecedores',
+    path: '/fornecedores',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -38,11 +57,17 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/fornecedores': typeof AuthenticatedFornecedoresRoute
+  '/instrucoes': typeof AuthenticatedInstrucoesRoute
+  '/lancar': typeof AuthenticatedLancarRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/fornecedores': typeof AuthenticatedFornecedoresRoute
+  '/instrucoes': typeof AuthenticatedInstrucoesRoute
+  '/lancar': typeof AuthenticatedLancarRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -50,18 +75,30 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/fornecedores': typeof AuthenticatedFornecedoresRoute
+  '/_authenticated/instrucoes': typeof AuthenticatedInstrucoesRoute
+  '/_authenticated/lancar': typeof AuthenticatedLancarRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/dashboard'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/dashboard'
+    | '/fornecedores'
+    | '/instrucoes'
+    | '/lancar'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/dashboard'
+  to: '/' | '/auth' | '/dashboard' | '/fornecedores' | '/instrucoes' | '/lancar'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/auth'
     | '/_authenticated/dashboard'
+    | '/_authenticated/fornecedores'
+    | '/_authenticated/instrucoes'
+    | '/_authenticated/lancar'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -93,6 +130,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/lancar': {
+      id: '/_authenticated/lancar'
+      path: '/lancar'
+      fullPath: '/lancar'
+      preLoaderRoute: typeof AuthenticatedLancarRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/instrucoes': {
+      id: '/_authenticated/instrucoes'
+      path: '/instrucoes'
+      fullPath: '/instrucoes'
+      preLoaderRoute: typeof AuthenticatedInstrucoesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/fornecedores': {
+      id: '/_authenticated/fornecedores'
+      path: '/fornecedores'
+      fullPath: '/fornecedores'
+      preLoaderRoute: typeof AuthenticatedFornecedoresRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
       path: '/dashboard'
@@ -105,10 +163,16 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedFornecedoresRoute: typeof AuthenticatedFornecedoresRoute
+  AuthenticatedInstrucoesRoute: typeof AuthenticatedInstrucoesRoute
+  AuthenticatedLancarRoute: typeof AuthenticatedLancarRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedFornecedoresRoute: AuthenticatedFornecedoresRoute,
+  AuthenticatedInstrucoesRoute: AuthenticatedInstrucoesRoute,
+  AuthenticatedLancarRoute: AuthenticatedLancarRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
@@ -122,13 +186,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

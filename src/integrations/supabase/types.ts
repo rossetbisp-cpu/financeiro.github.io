@@ -14,42 +14,171 @@ export type Database = {
   }
   public: {
     Tables: {
+      brand_shares: {
+        Row: {
+          brand: string
+          created_at: string
+          id: string
+          month: string
+          share: number
+        }
+        Insert: {
+          brand: string
+          created_at?: string
+          id?: string
+          month: string
+          share?: number
+        }
+        Update: {
+          brand?: string
+          created_at?: string
+          id?: string
+          month?: string
+          share?: number
+        }
+        Relationships: []
+      }
+      expense_attachments: {
+        Row: {
+          created_at: string
+          id: string
+          mime: string | null
+          path: string
+          rateio_group_id: string | null
+          size_bytes: number | null
+          uploaded_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          mime?: string | null
+          path: string
+          rateio_group_id?: string | null
+          size_bytes?: number | null
+          uploaded_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          mime?: string | null
+          path?: string
+          rateio_group_id?: string | null
+          size_bytes?: number | null
+          uploaded_by?: string | null
+        }
+        Relationships: []
+      }
       expenses: {
         Row: {
           c_custo: string | null
           conta_contabil: string | null
           created_at: string
+          created_by: string | null
+          data_emissao: string | null
+          data_recebimento: string | null
+          data_vencimento: string | null
           date: string
           descricao: string | null
           fornecedor: string | null
           id: string
+          marca: string | null
           pacote: string | null
+          rateio_group_id: string | null
+          rateio_modo: string | null
           subpacote: string | null
+          tipo_documento: string[] | null
           valor: number
         }
         Insert: {
           c_custo?: string | null
           conta_contabil?: string | null
           created_at?: string
+          created_by?: string | null
+          data_emissao?: string | null
+          data_recebimento?: string | null
+          data_vencimento?: string | null
           date: string
           descricao?: string | null
           fornecedor?: string | null
           id?: string
+          marca?: string | null
           pacote?: string | null
+          rateio_group_id?: string | null
+          rateio_modo?: string | null
           subpacote?: string | null
+          tipo_documento?: string[] | null
           valor?: number
         }
         Update: {
           c_custo?: string | null
           conta_contabil?: string | null
           created_at?: string
+          created_by?: string | null
+          data_emissao?: string | null
+          data_recebimento?: string | null
+          data_vencimento?: string | null
           date?: string
           descricao?: string | null
           fornecedor?: string | null
           id?: string
+          marca?: string | null
           pacote?: string | null
+          rateio_group_id?: string | null
+          rateio_modo?: string | null
           subpacote?: string | null
+          tipo_documento?: string[] | null
           valor?: number
+        }
+        Relationships: []
+      }
+      suppliers: {
+        Row: {
+          cnpj: string | null
+          contato: string | null
+          created_at: string
+          dominio: string | null
+          email: string | null
+          id: string
+          marcas: string[]
+          nome: string
+          observacoes: string | null
+          pacote_padrao: string | null
+          prazo_dias: number | null
+          subpacote_padrao: string | null
+          telefone: string | null
+          updated_at: string
+        }
+        Insert: {
+          cnpj?: string | null
+          contato?: string | null
+          created_at?: string
+          dominio?: string | null
+          email?: string | null
+          id?: string
+          marcas?: string[]
+          nome: string
+          observacoes?: string | null
+          pacote_padrao?: string | null
+          prazo_dias?: number | null
+          subpacote_padrao?: string | null
+          telefone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          cnpj?: string | null
+          contato?: string | null
+          created_at?: string
+          dominio?: string | null
+          email?: string | null
+          id?: string
+          marcas?: string[]
+          nome?: string
+          observacoes?: string | null
+          pacote_padrao?: string | null
+          prazo_dias?: number | null
+          subpacote_padrao?: string | null
+          telefone?: string | null
+          updated_at?: string
         }
         Relationships: []
       }
