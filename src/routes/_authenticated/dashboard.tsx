@@ -285,7 +285,7 @@ function Dashboard() {
                 <ToggleGroupItem value="fornecedor" size="sm">Por fornecedor</ToggleGroupItem>
               </ToggleGroup>
               <Select
-                value="__placeholder__"
+                value=""
                 onValueChange={(v) => {
                   if (v === "__clear__") { setChartSelected([]); return; }
                   setChartSelected((prev) => prev.includes(v) ? prev.filter((x) => x !== v) : [...prev, v]);
