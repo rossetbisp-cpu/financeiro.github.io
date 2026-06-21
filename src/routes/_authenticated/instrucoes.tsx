@@ -1,7 +1,10 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { AppShell } from "@/components/AppShell";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { AppShell, ackKey } from "@/components/AppShell";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Mail, FileText, BellRing, CheckCircle2, ClipboardList,
   PieChart, UserCheck, Wallet, Receipt, PartyPopper, ArrowRight,
@@ -31,6 +34,26 @@ const steps = [
 ];
 
 function Page() {
+  const navigate = useNavigate();
+  const [uid, setUid] = useState<string | null>(null);
+  const [accepted, setAccepted] = useState(false);
+  const [checked, setChecked] = useState(false);
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      const id = data.user?.id ?? null;
+      setUid(id);
+      if (id && localStorage.getItem(ackKey(id)) === "1") {
+        setAccepted(true);
+        setChecked(true);
+      }
+    });
+  }, []);
+  const confirm = () => {
+    if (!uid || !checked) return;
+    localStorage.setItem(ackKey(uid), "1");
+    setAccepted(true);
+    navigate({ to: "/dashboard" });
+  };
   return (
     <AppShell title="Instruções">
       <div className="max-w-5xl mx-auto p-6 space-y-8">
@@ -48,9 +71,11 @@ function Page() {
                 <span className="font-medium">cobranca.digital@rosset.com.br</span>
               </div>
             </div>
-            <Button asChild variant="secondary" size="lg">
-              <Link to="/lancar">Lançar despesa <ArrowRight className="h-4 w-4 ml-2" /></Link>
-            </Button>
+            {accepted ? (
+              <Button variant="secondary" size="lg" onClick={() => navigate({ to: "/dashboard" })}>
+                Ir para o Dashboard <ArrowRight className="h-4 w-4 ml-2" />
+              </Button>
+            ) : null}
           </div>
         </Card>
 
@@ -78,6 +103,32 @@ function Page() {
         <p className="text-center text-sm text-muted-foreground italic">
           ❤ Seguimos juntos, tecendo relações de confiança todos os dias.
         </p>
+
+        <Card className="p-6 border-2 border-accent/40 bg-accent/5 sticky bottom-4 shadow-[var(--shadow-elegant)]">
+          <div className="flex flex-col md:flex-row md:items-center gap-4 justify-between">
+            <label className="flex items-start gap-3 cursor-pointer">
+              <Checkbox
+                checked={checked}
+                onCheckedChange={(v) => setChecked(v === true)}
+                disabled={accepted}
+                className="mt-1"
+              />
+              <span className="text-sm leading-relaxed">
+                Li e estou ciente do fluxo de pagamento e das responsabilidades descritas acima.
+                {accepted && <span className="ml-2 text-accent font-medium">✓ Confirmado</span>}
+              </span>
+            </label>
+            <Button
+              size="lg"
+              onClick={confirm}
+              disabled={!checked || accepted}
+              className="shrink-0"
+            >
+              {accepted ? "Já confirmado" : "Confirmar ciência e continuar"}
+              <ArrowRight className="h-4 w-4 ml-2" />
+            </Button>
+          </div>
+        </Card>
       </div>
     </AppShell>
   );

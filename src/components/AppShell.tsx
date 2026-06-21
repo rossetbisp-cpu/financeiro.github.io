@@ -1,5 +1,5 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
-import { type ReactNode } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import {
   Sidebar,
   SidebarContent,
@@ -18,6 +18,8 @@ import { LayoutDashboard, FilePlus2, Building2, BookOpen, LogOut } from "lucide-
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import logoAsset from "@/assets/rosset-logo.png.asset.json";
+
+export const ackKey = (uid: string) => `rosset_terms_accepted_${uid}`;
 
 const nav = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -77,6 +79,21 @@ function BrandSidebar() {
 }
 
 export function AppShell({ title, children }: { title: string; children: ReactNode }) {
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const navigate = useNavigate();
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase.auth.getUser();
+      const uid = data.user?.id;
+      if (!uid || cancelled) return;
+      const accepted = typeof window !== "undefined" && localStorage.getItem(ackKey(uid)) === "1";
+      if (!accepted && pathname !== "/instrucoes") {
+        navigate({ to: "/instrucoes", replace: true });
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [pathname, navigate]);
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-background">
