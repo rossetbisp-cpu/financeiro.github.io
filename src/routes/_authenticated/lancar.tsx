@@ -106,8 +106,24 @@ function Page() {
       // upload attachments
       const uploaded: { path: string; mime?: string; size?: number }[] = [];
       for (const f of files) {
+        const allowedMime = new Set([
+          "application/pdf",
+          "image/jpeg",
+          "image/png",
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          "application/vnd.ms-excel",
+        ]);
+        const allowedExt = /\.(pdf|jpe?g|png|xlsx|xls)$/i;
+        if (!allowedMime.has(f.type) || !allowedExt.test(f.name)) {
+          setUploading(false);
+          throw new Error(`Tipo de arquivo não permitido: ${f.name}. Aceitos: PDF, JPG, PNG, XLSX.`);
+        }
+        if (f.size > 15 * 1024 * 1024) {
+          setUploading(false);
+          throw new Error(`Arquivo muito grande (máx 15MB): ${f.name}`);
+        }
         const path = `${new Date().toISOString().slice(0,10)}/${crypto.randomUUID()}-${f.name}`;
-        const { error } = await supabase.storage.from("expense-docs").upload(path, f, { upsert: false });
+        const { error } = await supabase.storage.from("expense-docs").upload(path, f, { upsert: false, contentType: f.type });
         if (error) throw new Error(`Upload falhou: ${error.message}`);
         uploaded.push({ path, mime: f.type, size: f.size });
       }
@@ -267,7 +283,13 @@ function Page() {
             <Upload className="h-6 w-6 text-muted-foreground mb-2" />
             <span className="text-sm text-muted-foreground">Carregue todos os documentos para validação</span>
             <span className="text-xs text-muted-foreground/70 mt-1">PDF, JPG, PNG, XLSX</span>
-            <input type="file" multiple className="hidden" onChange={(e) => setFiles([...files, ...Array.from(e.target.files ?? [])])} />
+            <input
+              type="file"
+              multiple
+              accept=".pdf,.jpg,.jpeg,.png,.xlsx,.xls,application/pdf,image/jpeg,image/png,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
+              className="hidden"
+              onChange={(e) => setFiles([...files, ...Array.from(e.target.files ?? [])])}
+            />
           </label>
           {files.length > 0 && (
             <ul className="space-y-1.5">
