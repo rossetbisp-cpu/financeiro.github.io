@@ -15,6 +15,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedLancarRouteImport } from './routes/_authenticated/lancar'
 import { Route as AuthenticatedInstrucoesRouteImport } from './routes/_authenticated/instrucoes'
 import { Route as AuthenticatedFornecedoresRouteImport } from './routes/_authenticated/fornecedores'
+import { Route as AuthenticatedEnviosRouteImport } from './routes/_authenticated/envios'
 import { Route as AuthenticatedDespesasRouteImport } from './routes/_authenticated/despesas'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 
@@ -48,6 +49,11 @@ const AuthenticatedFornecedoresRoute =
     path: '/fornecedores',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedEnviosRoute = AuthenticatedEnviosRouteImport.update({
+  id: '/envios',
+  path: '/envios',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedDespesasRoute = AuthenticatedDespesasRouteImport.update({
   id: '/despesas',
   path: '/despesas',
@@ -64,6 +70,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/despesas': typeof AuthenticatedDespesasRoute
+  '/envios': typeof AuthenticatedEnviosRoute
   '/fornecedores': typeof AuthenticatedFornecedoresRoute
   '/instrucoes': typeof AuthenticatedInstrucoesRoute
   '/lancar': typeof AuthenticatedLancarRoute
@@ -73,6 +80,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/despesas': typeof AuthenticatedDespesasRoute
+  '/envios': typeof AuthenticatedEnviosRoute
   '/fornecedores': typeof AuthenticatedFornecedoresRoute
   '/instrucoes': typeof AuthenticatedInstrucoesRoute
   '/lancar': typeof AuthenticatedLancarRoute
@@ -84,6 +92,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/despesas': typeof AuthenticatedDespesasRoute
+  '/_authenticated/envios': typeof AuthenticatedEnviosRoute
   '/_authenticated/fornecedores': typeof AuthenticatedFornecedoresRoute
   '/_authenticated/instrucoes': typeof AuthenticatedInstrucoesRoute
   '/_authenticated/lancar': typeof AuthenticatedLancarRoute
@@ -95,6 +104,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/dashboard'
     | '/despesas'
+    | '/envios'
     | '/fornecedores'
     | '/instrucoes'
     | '/lancar'
@@ -104,6 +114,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/dashboard'
     | '/despesas'
+    | '/envios'
     | '/fornecedores'
     | '/instrucoes'
     | '/lancar'
@@ -114,6 +125,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/_authenticated/dashboard'
     | '/_authenticated/despesas'
+    | '/_authenticated/envios'
     | '/_authenticated/fornecedores'
     | '/_authenticated/instrucoes'
     | '/_authenticated/lancar'
@@ -169,6 +181,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedFornecedoresRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/envios': {
+      id: '/_authenticated/envios'
+      path: '/envios'
+      fullPath: '/envios'
+      preLoaderRoute: typeof AuthenticatedEnviosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/despesas': {
       id: '/_authenticated/despesas'
       path: '/despesas'
@@ -189,6 +208,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedDespesasRoute: typeof AuthenticatedDespesasRoute
+  AuthenticatedEnviosRoute: typeof AuthenticatedEnviosRoute
   AuthenticatedFornecedoresRoute: typeof AuthenticatedFornecedoresRoute
   AuthenticatedInstrucoesRoute: typeof AuthenticatedInstrucoesRoute
   AuthenticatedLancarRoute: typeof AuthenticatedLancarRoute
@@ -197,6 +217,7 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedDespesasRoute: AuthenticatedDespesasRoute,
+  AuthenticatedEnviosRoute: AuthenticatedEnviosRoute,
   AuthenticatedFornecedoresRoute: AuthenticatedFornecedoresRoute,
   AuthenticatedInstrucoesRoute: AuthenticatedInstrucoesRoute,
   AuthenticatedLancarRoute: AuthenticatedLancarRoute,

@@ -14,7 +14,7 @@ import {
   SidebarFooter,
   SidebarHeader,
 } from "@/components/ui/sidebar";
-import { LayoutDashboard, FilePlus2, Building2, BookOpen, LogOut } from "lucide-react";
+import { LayoutDashboard, FilePlus2, Building2, BookOpen, LogOut, Receipt, Inbox } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import logoAsset from "@/assets/rosset-logo.png.asset.json";
@@ -24,6 +24,8 @@ export const ackKey = (uid: string) => `rosset_terms_accepted_${uid}`;
 const nav = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/lancar", label: "Lançar Despesa", icon: FilePlus2 },
+  { to: "/despesas", label: "Despesas", icon: Receipt },
+  { to: "/envios", label: "Envios", icon: Inbox },
   { to: "/fornecedores", label: "Fornecedores", icon: Building2 },
   { to: "/instrucoes", label: "Instruções", icon: BookOpen },
 ] as const;
