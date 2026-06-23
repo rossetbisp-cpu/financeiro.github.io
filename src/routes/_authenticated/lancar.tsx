@@ -9,13 +9,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
-import { brl, BRANDS, RATEIO_PRESETS, type Brand } from "@/lib/format";
 import { createExpenseEntry } from "@/lib/expenses.functions";
 import { listSuppliers } from "@/lib/suppliers.functions";
 import { supabase } from "@/integrations/supabase/client";
-import { CheckCircle2, FilePlus2, Upload, X, AlertCircle, Sparkles } from "lucide-react";
+import { FilePlus2, Upload, X, Info } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/lancar")({
@@ -45,8 +43,6 @@ function Page() {
   const [dataVencimento, setDataVencimento] = useState("");
   const [valorTotal, setValorTotal] = useState<number>(0);
   const [tipoDoc, setTipoDoc] = useState<string[]>(["Nota", "Boleto"]);
-  const [rateioModo, setRateioModo] = useState<"interno" | "externo">("interno");
-  const [splits, setSplits] = useState<Record<Brand, number>>({} as any);
   const [files, setFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
 
@@ -59,44 +55,6 @@ function Page() {
     if (s) {
       if (s.pacote_padrao) setPacote(s.pacote_padrao);
       if (s.subpacote_padrao) setSubpacote(s.subpacote_padrao);
-      if (s.marcas?.length) {
-        const init: Record<string, number> = {};
-        for (const b of s.marcas) init[b] = 0;
-        setSplits(init as any);
-      }
-    }
-  };
-
-  const splitSum = useMemo(() => Object.values(splits).reduce((s, v) => s + Number(v || 0), 0), [splits]);
-  const diff = valorTotal - splitSum;
-  const balanced = Math.abs(diff) < 0.02 && valorTotal > 0;
-
-  const setBrandValue = (b: Brand, v: number) => setSplits({ ...splits, [b]: v });
-
-  const applyPreset = (brands: Brand[]) => {
-    if (!valorTotal) return toast.error("Informe primeiro o valor total");
-    const per = valorTotal / brands.length;
-    const next: Record<string, number> = {};
-    for (const b of brands) next[b] = Math.round(per * 100) / 100;
-    // adjust rounding diff
-    const sum = Object.values(next).reduce((s, v) => s + v, 0);
-    const d = Math.round((valorTotal - sum) * 100) / 100;
-    if (d !== 0) next[brands[0]] = Math.round((next[brands[0]] + d) * 100) / 100;
-    setSplits(next as any);
-  };
-
-  const splitEqually = () => {
-    const brands = Object.keys(splits) as Brand[];
-    if (brands.length === 0) return toast.error("Selecione marcas primeiro");
-    applyPreset(brands);
-  };
-
-  const toggleBrand = (b: Brand) => {
-    if (b in splits) {
-      const { [b]: _, ...rest } = splits;
-      setSplits(rest as any);
-    } else {
-      setSplits({ ...splits, [b]: 0 });
     }
   };
 
@@ -128,9 +86,6 @@ function Page() {
         uploaded.push({ path, mime: f.type, size: f.size });
       }
       setUploading(false);
-      const splitsArr = Object.entries(splits)
-        .filter(([, v]) => Number(v) > 0)
-        .map(([marca, valor]) => ({ marca, valor: Number(valor) }));
       return fnCreate({
         data: {
           date: dataEmissao || today(),
@@ -143,8 +98,8 @@ function Page() {
           pacote: pacote || null,
           subpacote: subpacote || null,
           tipo_documento: tipoDoc,
-          rateio_modo: rateioModo,
-          splits: splitsArr,
+          rateio_modo: "pendente",
+          splits: [],
           attachments: uploaded,
         },
       });
@@ -156,7 +111,7 @@ function Page() {
     onError: (e: any) => { setUploading(false); toast.error(e.message); },
   });
 
-  const canSubmit = fornecedor && valorTotal > 0 && balanced && dataVencimento && !submitMut.isPending;
+  const canSubmit = fornecedor && valorTotal > 0 && dataVencimento && !submitMut.isPending;
 
   return (
     <AppShell title="Lançar Despesa">
@@ -218,63 +173,21 @@ function Page() {
 
         <Card className="p-6 space-y-5">
           <SectionTitle n={3} title="Rateio entre marcas" />
-          <div className="flex flex-wrap gap-3 items-center">
-            <ToggleGroup type="single" value={rateioModo} onValueChange={(v) => v && setRateioModo(v as any)}>
-              <ToggleGroupItem value="interno" size="sm">Rateio interno</ToggleGroupItem>
-              <ToggleGroupItem value="externo" size="sm">Rateio externo</ToggleGroupItem>
-            </ToggleGroup>
-            <span className="text-xs text-muted-foreground">
-              {rateioModo === "interno"
-                ? "Indique as marcas que participam — soma deve fechar com o valor total."
-                : "Valor já vem segregado pelo fornecedor por marca."}
-            </span>
-          </div>
-
-          <div>
-            <Label className="text-xs text-muted-foreground">Marcas participantes</Label>
-            <div className="flex flex-wrap gap-2 mt-2">
-              {BRANDS.map((b) => {
-                const active = b in splits;
-                return (
-                  <button key={b} type="button" onClick={() => toggleBrand(b)}
-                    className={`text-xs px-3 py-1.5 rounded-md border transition ${active ? "bg-accent text-accent-foreground border-accent" : "bg-background hover:bg-muted"}`}>
-                    {b}
-                  </button>
-                );
-              })}
+          <div className="flex items-start gap-3 p-4 rounded-md border bg-muted/30">
+            <Info className="h-5 w-5 text-accent shrink-0 mt-0.5" />
+            <div className="text-sm text-muted-foreground space-y-1">
+              <p className="font-medium text-foreground">Informe apenas o valor total da nota.</p>
+              <p>O rateio entre as marcas será feito internamente pelo financeiro. Você só precisa lançar o valor recebido do fornecedor — aplica-se a todas as marcas em conjunto.</p>
+              {selectedSupplier?.marcas?.length ? (
+                <p className="text-xs">Marcas vinculadas a este fornecedor: <strong>{selectedSupplier.marcas.join(", ")}</strong></p>
+              ) : null}
             </div>
           </div>
-
-          {rateioModo === "interno" && (
-            <div className="space-y-3">
-              <div className="flex flex-wrap gap-2">
-                <span className="text-xs text-muted-foreground mr-1 self-center"><Sparkles className="h-3 w-3 inline mr-1" />Presets:</span>
-                {RATEIO_PRESETS.map((p) => (
-                  <Button key={p.label} variant="outline" size="sm" onClick={() => applyPreset(p.brands)}>{p.label}</Button>
-                ))}
-                <Button variant="secondary" size="sm" onClick={splitEqually}>Dividir igualmente</Button>
-              </div>
-            </div>
-          )}
-
-          <div className="grid sm:grid-cols-2 gap-3">
-            {Object.keys(splits).map((b) => (
-              <div key={b} className="flex items-center gap-2">
-                <Badge variant="outline" className="min-w-[140px] justify-center">{b}</Badge>
-                <Input type="number" step="0.01" value={(splits as any)[b] || ""} onChange={(e) => setBrandValue(b as Brand, Number(e.target.value))} />
-              </div>
-            ))}
+          <div className="grid md:grid-cols-2 gap-4">
+            <Field label="Valor total da nota (já informado acima)">
+              <Input value={valorTotal ? new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(valorTotal) : ""} disabled />
+            </Field>
           </div>
-
-          {Object.keys(splits).length > 0 && (
-            <div className={`flex items-center justify-between text-sm p-3 rounded-md border ${balanced ? "bg-success/5 border-success/30 text-success" : "bg-destructive/5 border-destructive/30 text-destructive"}`}>
-              <span className="flex items-center gap-2">
-                {balanced ? <CheckCircle2 className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />}
-                Soma: <strong className="tabular-nums">{brl(splitSum)}</strong> / Total: <strong className="tabular-nums">{brl(valorTotal)}</strong>
-              </span>
-              {!balanced && valorTotal > 0 && <span className="tabular-nums">Diferença: {brl(diff)}</span>}
-            </div>
-          )}
         </Card>
 
         <Card className="p-6 space-y-4">
