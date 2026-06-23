@@ -85,6 +85,7 @@ export type Database = {
           pacote: string | null
           rateio_group_id: string | null
           rateio_modo: string | null
+          status: string
           subpacote: string | null
           tipo_documento: string[] | null
           valor: number
@@ -105,6 +106,7 @@ export type Database = {
           pacote?: string | null
           rateio_group_id?: string | null
           rateio_modo?: string | null
+          status?: string
           subpacote?: string | null
           tipo_documento?: string[] | null
           valor?: number
@@ -125,6 +127,7 @@ export type Database = {
           pacote?: string | null
           rateio_group_id?: string | null
           rateio_modo?: string | null
+          status?: string
           subpacote?: string | null
           tipo_documento?: string[] | null
           valor?: number

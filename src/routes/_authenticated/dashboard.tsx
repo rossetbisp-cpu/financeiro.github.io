@@ -18,6 +18,11 @@ import {
 import { PartnerLogo } from "@/components/PartnerLogo";
 import { brl, compactBrl } from "@/lib/format";
 import { AppShell } from "@/components/AppShell";
+import { Button } from "@/components/ui/button";
+import {
+  Popover, PopoverContent, PopoverTrigger,
+} from "@/components/ui/popover";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   ReceiptText,
   Building2,
@@ -26,6 +31,8 @@ import {
   Search,
   TrendingUp,
   Wallet,
+  Download,
+  FileDown,
 } from "lucide-react";
 import {
   BarChart,
@@ -75,6 +82,11 @@ function Dashboard() {
   // chart controls
   const [chartDim, setChartDim] = useState<"pacote" | "fornecedor">("pacote");
   const [chartSelected, setChartSelected] = useState<string[]>([]);
+
+  // export controls
+  const [exportFrom, setExportFrom] = useState("");
+  const [exportTo, setExportTo] = useState("");
+  const [exportFornecedores, setExportFornecedores] = useState<string[]>([]);
 
   const all = data ?? [];
 
@@ -179,9 +191,90 @@ function Dashboard() {
 
   const chartColors = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--chart-4)", "var(--chart-5)", "var(--accent)"];
 
+  const buildExportRows = () => {
+    return all.filter((r) => {
+      if (exportFrom && r.date < exportFrom) return false;
+      if (exportTo && r.date > exportTo) return false;
+      if (exportFornecedores.length && !exportFornecedores.includes(r.fornecedor ?? "")) return false;
+      return true;
+    });
+  };
+
+  const downloadCSV = () => {
+    const rows = buildExportRows();
+    if (!rows.length) return;
+    const headers = ["data","fornecedor","pacote","subpacote","marca","descricao","valor"];
+    const csv = [headers.join(";"), ...rows.map((r: any) => [
+      r.date, r.fornecedor ?? "", r.pacote ?? "", r.subpacote ?? "", r.marca ?? r.c_custo ?? "",
+      (r.descricao ?? "").replace(/[;\n\r]/g, " "),
+      Number(r.valor).toFixed(2).replace(".", ","),
+    ].join(";"))].join("\n");
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = `despesas_${new Date().toISOString().slice(0,10)}.csv`; a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const downloadJSON = () => {
+    const rows = buildExportRows();
+    const blob = new Blob([JSON.stringify(rows, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = `despesas_${new Date().toISOString().slice(0,10)}.json`; a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <AppShell title="Dashboard">
       <div className="max-w-[1500px] mx-auto p-6 space-y-6">
+        {/* Export */}
+        <Card className="p-4 flex flex-wrap items-end gap-3 justify-between">
+          <div className="flex flex-wrap items-end gap-3">
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-muted-foreground">Exportar — período de</label>
+              <Input type="date" value={exportFrom} onChange={(e) => setExportFrom(e.target.value)} className="w-[160px]" />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-muted-foreground">até</label>
+              <Input type="date" value={exportTo} onChange={(e) => setExportTo(e.target.value)} className="w-[160px]" />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-muted-foreground">Fornecedores</label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="w-[260px] justify-start font-normal">
+                    {exportFornecedores.length === 0 ? "Todos os fornecedores" : `${exportFornecedores.length} selecionado(s)`}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[300px] max-h-[360px] overflow-auto p-2">
+                  <div className="flex items-center justify-between mb-2 px-1">
+                    <button className="text-xs text-accent hover:underline" onClick={() => setExportFornecedores(fornecedores)}>Selecionar todos</button>
+                    <button className="text-xs text-muted-foreground hover:underline" onClick={() => setExportFornecedores([])}>Limpar</button>
+                  </div>
+                  <div className="space-y-1">
+                    {fornecedores.map((f) => {
+                      const checked = exportFornecedores.includes(f);
+                      return (
+                        <label key={f} className="flex items-center gap-2 text-sm p-1.5 rounded hover:bg-muted cursor-pointer">
+                          <Checkbox checked={checked} onCheckedChange={(v) => {
+                            setExportFornecedores(v ? [...exportFornecedores, f] : exportFornecedores.filter((x) => x !== f));
+                          }} />
+                          <span className="truncate">{f}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </PopoverContent>
+              </Popover>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <Button onClick={downloadCSV} className="gap-2"><Download className="h-4 w-4" />Exportar CSV</Button>
+            <Button variant="outline" onClick={downloadJSON} className="gap-2"><FileDown className="h-4 w-4" />JSON</Button>
+          </div>
+        </Card>
+
         {/* Filters */}
         <Card className="p-4">
           <div className="grid gap-3 md:grid-cols-4">
